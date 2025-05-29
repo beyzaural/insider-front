@@ -24,6 +24,7 @@ const props = defineProps({
     required: true,
   },
 });
+const finishTimes = ref({});
 
 const positions = ref([]);
 const raceDoneResolver = ref(null);
@@ -32,6 +33,7 @@ let interval = null;
 // Start fonksiyonu elle çağrılacak
 async function start() {
   if (!props.race || !props.race.horses) return;
+  finishTimes.value = {};
 
   const maxHorseId = Math.max(...props.race.horses.map((h) => h.id));
   positions.value = Array(maxHorseId).fill(0);
@@ -42,6 +44,14 @@ async function start() {
     positions.value = positions.value.map((pos) =>
       Math.min(pos + Math.random() * 5, 95)
     );
+
+    props.race.horses.forEach((h) => {
+      const id = h.id;
+      if (positions.value[id - 1] >= 90 && !finishTimes.value[id]) {
+        finishTimes.value[id] = Date.now();
+      }
+    });
+
     if (positions.value.every((p) => p >= 90)) {
       clearInterval(interval);
       if (raceDoneResolver.value) raceDoneResolver.value();
@@ -54,12 +64,13 @@ function awaitRaceFinish() {
     raceDoneResolver.value = resolve;
   });
 }
-function getPosition(horseId) {
-  const value = positions.value[horseId - 1];
-  return value ?? 0;
+function getFinishOrder() {
+  return Object.entries(finishTimes.value)
+    .sort((a, b) => a[1] - b[1]) // zamana göre sırala
+    .map(([horseId]) => parseInt(horseId));
 }
 
-defineExpose({ start, awaitRaceFinish, getPosition });
+defineExpose({ start, awaitRaceFinish, getFinishOrder });
 </script>
 
 <style scoped>

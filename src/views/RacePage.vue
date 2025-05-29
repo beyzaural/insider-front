@@ -115,12 +115,8 @@ const startRace = async () => {
       await new Promise((res) => setTimeout(res, 4000));
     }
     // sonucu sırala
-    const horseOrder = [...currentRace.value.horses].sort(
-      (a, b) =>
-        raceAnimationRef.value.getPosition(a.id) -
-        raceAnimationRef.value.getPosition(b.id)
-    );
-    results.value.push(horseOrder.map((h) => h.id));
+    const horseOrder = raceAnimationRef.value.getFinishOrder(); // Bitirme zamanına göre sırala
+    results.value.push(horseOrder); // Direkt ID listesi
   }
 };
 </script>
