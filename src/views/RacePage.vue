@@ -23,7 +23,7 @@
         </table>
       </div>
 
-      <!-- 2. Sütun: Butonlar + Animasyon -->
+      <!-- 2. Sütun: Butonlar + Animasyon + Live Results -->
       <div class="center-column">
         <div class="controls">
           <button class="generate-btn" @click="generateRace">
@@ -33,12 +33,30 @@
             Start Race
           </button>
         </div>
+
         <div class="animation-track">
           <RaceAnimation
             v-if="currentRace"
             :race="currentRace"
             ref="raceAnimationRef"
           />
+        </div>
+
+        <!-- ✅ LIVE RESULTS - daha az yer kaplayan versiyon -->
+        <div class="live-results" v-if="results.length > 0">
+          <h2 class="section-title">📍 Live Results</h2>
+          <ul class="compact-results-list">
+            <li v-for="(lapResults, index) in results" :key="index">
+              <strong
+                >{{ index + 1 }}. Lap - {{ races[index].distance }}m</strong
+              ><br />
+              <span class="compact-result-line">
+                <span v-for="(horse, i) in lapResults.slice(0, 10)" :key="i">
+                  {{ i + 1 }}. Horse #{{ horse }}{{ i < 9 ? ", " : "" }}
+                </span>
+              </span>
+            </li>
+          </ul>
         </div>
       </div>
 
@@ -62,8 +80,9 @@ import { useHorseStore } from "../db/horseStore";
 import RaceAnimation from "@/components/RaceAnimation.vue";
 
 const isGenerating = ref(false);
-const horseStore = useHorseStore();
+const results = ref([]);
 
+const horseStore = useHorseStore();
 const horses = computed(() => horseStore.horses);
 const races = computed(() => horseStore.races);
 
@@ -79,6 +98,7 @@ const currentRace = computed(() => races.value[currentRaceIndex.value]);
 const raceAnimationRef = ref(null);
 
 const startRace = async () => {
+  results.value = [];
   for (let i = 0; i < races.value.length; i++) {
     currentRaceIndex.value = i;
 
@@ -90,10 +110,17 @@ const startRace = async () => {
       raceAnimationRef.value?.awaitRaceFinish
     ) {
       raceAnimationRef.value.start(); // 🏁 Animasyonu başlat
-      await raceAnimationRef.value.awaitRaceFinish(); // ✅ Bitmesini bekle
+      await raceAnimationRef.value.awaitRaceFinish();
     } else {
       await new Promise((res) => setTimeout(res, 4000));
     }
+    // sonucu sırala
+    const horseOrder = [...currentRace.value.horses].sort(
+      (a, b) =>
+        raceAnimationRef.value.getPosition(a.id) -
+        raceAnimationRef.value.getPosition(b.id)
+    );
+    results.value.push(horseOrder.map((h) => h.id));
   }
 };
 </script>
@@ -216,10 +243,17 @@ const startRace = async () => {
   flex-direction: row;
   gap: 30px;
 }
+.live-results {
+  background-color: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  width: 100%;
+}
 
 .animation-track {
   position: relative;
-  margin-top: 60px;
+  margin-top: 20px;
   width: 500px;
   height: 500px;
   overflow: hidden;

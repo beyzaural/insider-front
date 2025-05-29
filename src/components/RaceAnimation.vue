@@ -54,8 +54,12 @@ function awaitRaceFinish() {
     raceDoneResolver.value = resolve;
   });
 }
+function getPosition(horseId) {
+  const value = positions.value[horseId - 1];
+  return value ?? 0;
+}
 
-defineExpose({ start, awaitRaceFinish });
+defineExpose({ start, awaitRaceFinish, getPosition });
 </script>
 
 <style scoped>
