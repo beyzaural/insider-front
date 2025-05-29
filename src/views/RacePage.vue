@@ -1,42 +1,49 @@
 <template>
   <div class="race-page">
-    <!-- SIDEBAR -->
-    <div class="sidebar">
-      <h2 class="section-title">🏁 Horse List</h2>
-      <table class="horse-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Name</th>
-            <th>Condition</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="horse in horses" :key="horse.id">
-            <td>{{ horse.id }}</td>
-            <td>Horse #{{ horse.id }}</td>
-            <td :style="{ color: horse.color }">{{ horse.condition }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
     <!-- MAIN SECTION -->
     <div class="main-section">
-      <!-- Generate Race Button -->
-      <div class="top-button">
-        <button class="generate-btn" @click="generateRace">
-          Generate Race
-        </button>
+      <!-- 1. Sütun: Horse List -->
+      <div class="sidebar">
+        <h2 class="section-title">🏁 Horse List</h2>
+        <table class="horse-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Condition</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="horse in horses" :key="horse.id">
+              <td>{{ horse.id }}</td>
+              <td>Horse #{{ horse.id }}</td>
+              <td :style="{ color: horse.color }">{{ horse.condition }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
-      <!-- program-section -->
-      <div v-if="races.length === 0" class="loading-text">
-        Generating race program...
+      <!-- 2. Sütun: Butonlar + Animasyon -->
+      <div class="center-column">
+        <div class="controls">
+          <button class="generate-btn" @click="generateRace">
+            Generate Race
+          </button>
+          <button v-if="races.length" class="generate-btn" @click="startRace">
+            Start Race
+          </button>
+        </div>
+        <div class="animation-track">
+          <RaceAnimation
+            v-if="currentRace"
+            :race="currentRace"
+            ref="raceAnimationRef"
+          />
+        </div>
       </div>
 
-      <!-- RACE PROGRAM (appear after click) -->
-      <div v-if="races.length > 0" class="program-section">
+      <!-- 3. Sütun: Race Program -->
+      <div v-if="!isGenerating && races.length > 0" class="program-section">
         <h2 class="section-title">📋 RACE PROGRAM</h2>
         <ul class="program-list">
           <li v-for="(race, index) in races" :key="index">
@@ -50,14 +57,44 @@
 </template>
 
 <script setup>
+import { ref, computed, nextTick } from "vue";
 import { useHorseStore } from "../db/horseStore";
-const horseStore = useHorseStore();
-const horses = horseStore.horses;
-const races = horseStore.races;
+import RaceAnimation from "@/components/RaceAnimation.vue";
 
-const generateRace = () => {
-  console.log("Generating race...");
+const isGenerating = ref(false);
+const horseStore = useHorseStore();
+
+const horses = computed(() => horseStore.horses);
+const races = computed(() => horseStore.races);
+
+const generateRace = async () => {
+  isGenerating.value = true;
+  await new Promise((resolve) => setTimeout(resolve, 300));
   horseStore.generateRaceSchedule();
+  isGenerating.value = false;
+};
+
+const currentRaceIndex = ref(0);
+const currentRace = computed(() => races.value[currentRaceIndex.value]);
+const raceAnimationRef = ref(null);
+
+const startRace = async () => {
+  for (let i = 0; i < races.value.length; i++) {
+    currentRaceIndex.value = i;
+
+    // 💡 nextTick beklenir ve expose edilen metod çağrılır
+    await nextTick();
+
+    if (
+      raceAnimationRef.value?.start &&
+      raceAnimationRef.value?.awaitRaceFinish
+    ) {
+      raceAnimationRef.value.start(); // 🏁 Animasyonu başlat
+      await raceAnimationRef.value.awaitRaceFinish(); // ✅ Bitmesini bekle
+    } else {
+      await new Promise((res) => setTimeout(res, 4000));
+    }
+  }
 };
 </script>
 
@@ -67,7 +104,7 @@ const generateRace = () => {
   background-color: #f5f5ee;
   min-height: 100vh;
   font-family: "Avenir", Helvetica, sans-serif;
-  padding: 40px 10px;
+  padding: 20px 10px;
   gap: 40px;
 }
 
@@ -107,14 +144,18 @@ const generateRace = () => {
   font-weight: bold;
 }
 
-/* MAIN SECTION */
 .main-section {
-  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 40px;
+  padding: 40px;
+}
+/* Ortadaki alan */
+.center-column {
   display: flex;
   flex-direction: column;
-  align-items: flex-end; /* sağa yasla */
-  position: relative;
-  padding-right: 60px;
+  align-items: center;
+  gap: 40px;
 }
 
 .top-button {
@@ -123,7 +164,7 @@ const generateRace = () => {
 }
 
 .generate-btn {
-  padding: 12px 23px;
+  padding: 16px 23px;
   background-color: #ff8c42;
   color: white;
   border: none;
@@ -143,26 +184,48 @@ const generateRace = () => {
   margin-top: 60px;
   color: #666;
 }
-
-/* PROGRAM SECTION */
 .program-section {
-  width: 100%;
-  max-width: 400px;
-  align-self: flex-end;
+  margin-top: 0;
+  width: 320px;
+  justify-self: end; /* en sağa yasla */
+  margin-right: 0; /* sağdan 20px boşluk zaten parent’ta var */
 }
-
 .program-list {
   list-style: none;
   padding: 0;
+  width: 320px;
 }
 
 .program-list li {
   margin-bottom: 15px;
   background-color: white;
-  padding: 16px;
+  padding: 20px;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   word-break: break-word;
   white-space: normal;
+}
+.start-button {
+  margin-bottom: 20px;
+  text-align: center;
+  width: 100%;
+}
+
+.controls {
+  display: flex;
+  flex-direction: row;
+  gap: 30px;
+}
+
+.animation-track {
+  position: relative;
+  margin-top: 60px;
+  width: 500px;
+  height: 500px;
+  overflow: hidden;
+  background-color: #fdfdfd;
+  border: 1px dashed #ccc;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 </style>

@@ -10,12 +10,35 @@ export const useHorseStore = defineStore("horse", {
 
   actions: {
     generateHorses() {
+      const colors = [
+        "red",
+        "blue",
+        "green",
+        "orange",
+        "purple",
+        "yellow",
+        "cyan",
+        "magenta",
+        "lime",
+        "brown",
+        "#8e44ad",
+        "#1abc9c",
+        "#f39c12",
+        "#d35400",
+        "#2ecc71",
+        "#e74c3c",
+        "#3498db",
+        "#34495e",
+        "#7f8c8d",
+        "#27ae60",
+      ];
       this.horses = Array.from({ length: 20 }, (_, i) => ({
         id: i + 1,
-        color: this.getRandomColor(),
+        color: colors[i], // sabit renk veriyoruz
         condition: Math.floor(Math.random() * 100) + 1,
       }));
     },
+
     generateRaceSchedule() {
       const distances = [1200, 1400, 1600, 1800, 2000, 2200];
       const races = [];
