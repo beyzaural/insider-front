@@ -66,7 +66,7 @@ function awaitRaceFinish() {
 }
 function getFinishOrder() {
   return Object.entries(finishTimes.value)
-    .sort((a, b) => a[1] - b[1]) // zamana göre sırala
+    .sort((a, b) => a[1] - b[1])
     .map(([horseId]) => parseInt(horseId));
 }
 

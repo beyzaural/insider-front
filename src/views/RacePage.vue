@@ -1,6 +1,5 @@
 <template>
   <div class="race-page">
-    <!-- MAIN SECTION -->
     <div class="main-section">
       <!-- 1. Sütun: Horse List -->
       <div class="sidebar">
@@ -23,7 +22,6 @@
         </table>
       </div>
 
-      <!-- 2. Sütun: Butonlar + Animasyon + Live Results -->
       <div class="center-column">
         <div class="controls">
           <button class="generate-btn" @click="generateRace">
@@ -42,7 +40,6 @@
           />
         </div>
 
-        <!-- ✅ LIVE RESULTS - daha az yer kaplayan versiyon -->
         <div class="live-results" v-if="results.length > 0">
           <h2 class="section-title">📍 Live Results</h2>
           <ul class="compact-results-list">
@@ -60,7 +57,6 @@
         </div>
       </div>
 
-      <!-- 3. Sütun: Race Program -->
       <div v-if="!isGenerating && races.length > 0" class="program-section">
         <h2 class="section-title">📋 RACE PROGRAM</h2>
         <ul class="program-list">
@@ -102,21 +98,20 @@ const startRace = async () => {
   for (let i = 0; i < races.value.length; i++) {
     currentRaceIndex.value = i;
 
-    // 💡 nextTick beklenir ve expose edilen metod çağrılır
     await nextTick();
 
     if (
       raceAnimationRef.value?.start &&
       raceAnimationRef.value?.awaitRaceFinish
     ) {
-      raceAnimationRef.value.start(); // 🏁 Animasyonu başlat
+      raceAnimationRef.value.start();
       await raceAnimationRef.value.awaitRaceFinish();
     } else {
       await new Promise((res) => setTimeout(res, 4000));
     }
     // sonucu sırala
-    const horseOrder = raceAnimationRef.value.getFinishOrder(); // Bitirme zamanına göre sırala
-    results.value.push(horseOrder); // Direkt ID listesi
+    const horseOrder = raceAnimationRef.value.getFinishOrder();
+    results.value.push(horseOrder);
   }
 };
 </script>
