@@ -8,6 +8,9 @@
         :alt="`Horse ${horse.id}`"
         :style="{
           left: positions[horse.id - 1] + '%',
+          filter: `brightness(0) saturate(100%) hue-rotate(${
+            horseColors[horse.id]
+          }deg)`,
         }"
       />
     </div>
@@ -17,6 +20,15 @@
 <script setup>
 /* eslint-disable no-undef */
 import { ref, nextTick, defineExpose } from "vue";
+let isPaused = ref(false);
+
+function pause() {
+  isPaused.value = true;
+}
+
+function resume() {
+  isPaused.value = false;
+}
 
 const props = defineProps({
   race: {
@@ -24,11 +36,16 @@ const props = defineProps({
     required: true,
   },
 });
+const horseColors = ref({});
 const finishTimes = ref({});
 
 const positions = ref([]);
 const raceDoneResolver = ref(null);
 let interval = null;
+
+function generateRandomColorDegrees() {
+  return Math.floor(Math.random() * 360);
+}
 
 // Start fonksiyonu elle çağrılacak
 async function start() {
@@ -38,9 +55,15 @@ async function start() {
   const maxHorseId = Math.max(...props.race.horses.map((h) => h.id));
   positions.value = Array(maxHorseId).fill(0);
 
+  props.race.horses.forEach((h) => {
+    horseColors.value[h.id] = generateRandomColorDegrees();
+  });
+
   await nextTick(); // DOM güncellensin
 
   interval = setInterval(() => {
+    if (isPaused.value) return; // ✅ Durdurulmuşsa hiçbir şey yapma
+
     positions.value = positions.value.map((pos) =>
       Math.min(pos + Math.random() * 5, 95)
     );
@@ -70,7 +93,7 @@ function getFinishOrder() {
     .map(([horseId]) => parseInt(horseId));
 }
 
-defineExpose({ start, awaitRaceFinish, getFinishOrder });
+defineExpose({ start, pause, resume, awaitRaceFinish, getFinishOrder });
 </script>
 
 <style scoped>

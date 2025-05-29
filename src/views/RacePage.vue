@@ -30,6 +30,9 @@
           <button v-if="races.length" class="generate-btn" @click="startRace">
             Start Race
           </button>
+          <button v-if="races.length" class="generate-btn" @click="togglePause">
+            {{ isPaused ? "Resume" : "Pause" }}
+          </button>
         </div>
 
         <div class="animation-track">
@@ -81,6 +84,18 @@ const results = ref([]);
 const horseStore = useHorseStore();
 const horses = computed(() => horseStore.horses);
 const races = computed(() => horseStore.races);
+const isPaused = ref(false);
+
+const togglePause = () => {
+  if (!raceAnimationRef.value) return;
+
+  if (isPaused.value) {
+    raceAnimationRef.value.resume(); // kaldığı yerden devam
+  } else {
+    raceAnimationRef.value.pause(); // durdur
+  }
+  isPaused.value = !isPaused.value;
+};
 
 const generateRace = async () => {
   isGenerating.value = true;
